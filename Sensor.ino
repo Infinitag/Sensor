@@ -1,32 +1,69 @@
+// Infinitag Libs
+#include <Infinitag_Core.h>
+
+// Vendor Libs
 #include <Adafruit_NeoPixel.h>
 #include <Wire.h>
 #include <EEPROM.h>
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
+#include <IRremote.h>
+
+// Settings
 #define PIN 3
-
 #define EEPROM_I2C_ADDRESS 0x00
-
-
 #define MASTER_ADDRESS 0x20
 #define SLAVE_ADDRESS 0x21
-
-struct color
-{
-  byte r, g, b;
-};
-
-color Colors[] = {
-  {0, 0, 0},
-  {255, 0, 0},  
-  {0, 255, 0},
-  {0, 0, 255}
-};
-
 byte g_i2cAddress;
+int ir_receive_pin = 7;
 
+// Infinitag Inits
+Infinitag_Core infinitagCore;
+
+// Vendor Inits
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(3, PIN, NEO_GRBW + NEO_KHZ800);
+decode_results ir_results;
+IRrecv ir_recv(ir_receive_pin);
+
+void setup() {  
+  // LEDs
+  strip.begin();
+  waitLed(8);
+
+  //Wait For Master to Boot 
+  delay(1000);
+  g_i2cAddress = getI2CAddress(EEPROM_I2C_ADDRESS, false);
+  Wire.begin(g_i2cAddress);
+  
+  // IR
+  ir_recv.enableIRIn();
+}
+
+void loop() {
+
+  if (ir_recv.decode(&ir_results)) {
+    if (infinitagCore.ir_decode(ir_results.value)) {
+      setLedColor(strip.Color(255,0,0,0));
+    } else {
+      setLedColor(strip.Color(0,0,255,0));
+    }
+    
+    delay(200);
+    ir_recv.enableIRIn();
+  } else {
+    setLedColor(strip.Color(0,255,0,0));
+  }
+  
+  delay(10);
+}
+
+void setLedColor(uint32_t c) {
+  for (uint16_t i=0; i<strip.numPixels(); i++) {
+    strip.setPixelColor(i, c);
+  }
+  strip.show();
+}
 
 
 byte queryI2CAddressFromMaster()
@@ -79,28 +116,11 @@ byte getI2CAddress(int addressOfAddress, bool keepAddress)
   return i2cAddress;
 }
 
-
-void setup() {  
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
-
-  //Wait For Master to Boot 
-  delay(1000);
-
-  g_i2cAddress = getI2CAddress(EEPROM_I2C_ADDRESS, false);
-  
-  Wire.begin(g_i2cAddress);
-}
-
-void loop() {
-  // Some example procedures showing how to display to the pixels:
-  colorWipe(strip.Color(Colors[g_i2cAddress - SLAVE_ADDRESS].r, Colors[g_i2cAddress - SLAVE_ADDRESS].g, Colors[g_i2cAddress - SLAVE_ADDRESS].b), 0);
-}
-
-void colorWipe(uint32_t c, uint8_t wait) {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-    strip.setPixelColor(i, c);
-    strip.show();
-    delay(wait);
+void waitLed(int loops){
+  for (int i = 0; i < (loops * 2); i++) {
+    setLedColor(strip.Color(0,0,0,255));
+    delay(250);
+    setLedColor(strip.Color(0,0,0,0));
+    delay(250);
   }
 }

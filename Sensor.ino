@@ -9,12 +9,12 @@
   #include <avr/power.h>
 #endif
 #include <IRremote.h>
+#include <sensor_dhcp.h>
 
 // Settings
 #define PIN 3
+#define TEAM 1
 #define EEPROM_I2C_ADDRESS 0x00
-#define MASTER_ADDRESS 0x20
-#define SLAVE_ADDRESS 0x21
 byte g_i2cAddress;
 int ir_receive_pin = 7;
 
@@ -32,8 +32,7 @@ void setup() {
   waitLed(8);
 
   //Wait For Master to Boot 
-  delay(1000);
-  g_i2cAddress = getI2CAddress(EEPROM_I2C_ADDRESS, false);
+  g_i2cAddress = queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
   Wire.begin(g_i2cAddress);
   
   // IR
@@ -44,7 +43,10 @@ void loop() {
 
   if (ir_recv.decode(&ir_results)) {
     if (infinitagCore.ir_decode(ir_results.value)) {
-      setLedColor(strip.Color(255,0,0,0));
+      if(infinitagCore.ir_recv_team_id != TEAM)
+      {
+        setLedColor(strip.Color(255,0,0,0));
+      }
     } else {
       setLedColor(strip.Color(0,0,255,0));
     }
@@ -68,16 +70,20 @@ void setLedColor(uint32_t c) {
 
 byte queryI2CAddressFromMaster()
 {
-  byte i2cAddress = SLAVE_ADDRESS;
-  Wire.begin(SLAVE_ADDRESS);
+  byte i2cAddress = DHCP_DEFAULT_SLAVE_ADDRESS;
+  Wire.begin(DHCP_DEFAULT_SLAVE_ADDRESS);
 
-  while(Wire.requestFrom(MASTER_ADDRESS, 1) != 1)
+  while(Wire.requestFrom(DHCP_MASTER_ADDRESS, 1) != 1)
   {
     //don't block i2c bus
-    delay(50);
+    setLedColor(strip.Color(255,0,0,0));
+    delay(250);
+    setLedColor(strip.Color(0,0,0,0));
+    delay(250);
   }
   i2cAddress = Wire.read();
 
+  setLedColor(strip.Color(0,0,0,255));
   while(Wire.available())
   {
     Wire.read();  
@@ -94,11 +100,11 @@ byte getI2CAddress(int addressOfAddress, bool keepAddress)
   byte i2cAddress = EEPROM.read(addressOfAddress);
   if(i2cAddress == 255) //override EEPROM default value
   {
-    i2cAddress = SLAVE_ADDRESS;
+    i2cAddress = DHCP_DEFAULT_SLAVE_ADDRESS;
   }
   if(keepAddress)
   {
-    if(i2cAddress == SLAVE_ADDRESS)
+    if(i2cAddress == DHCP_DEFAULT_SLAVE_ADDRESS)
     {
       i2cAddress = queryI2CAddressFromMaster();
       EEPROM.write(addressOfAddress, i2cAddress);

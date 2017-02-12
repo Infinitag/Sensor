@@ -13,10 +13,13 @@
 
 // Settings
 #define PIN 3
-#define TEAM 1
 #define EEPROM_I2C_ADDRESS 0x00
 byte g_i2cAddress;
 int ir_receive_pin = 7;
+
+// Player
+byte playerTeamId = 1;
+byte playerId = 1;
 
 // Infinitag Inits
 Infinitag_Core infinitagCore;
@@ -34,17 +37,24 @@ void setup() {
   //Wait For Master to Boot 
   g_i2cAddress = queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
   Wire.begin(g_i2cAddress);
+  Wire.onReceive(receiveEvent);
   
   // IR
   ir_recv.enableIRIn();
 }
 
 void loop() {
+  setLedColor(strip.Color(0,0,0,255));
 
   if (ir_recv.decode(&ir_results)) {
     if (infinitagCore.ir_decode(ir_results.value)) {
-      if(infinitagCore.ir_recv_team_id != TEAM)
+      if(infinitagCore.ir_recv_team_id != playerTeamId)
       {
+        byte demoSignal = B00000001;
+        Wire.beginTransmission(DHCP_MASTER_ADDRESS);
+        Wire.write(demoSignal);
+        Wire.endTransmission();
+        
         setLedColor(strip.Color(255,0,0,0));
       }
     } else {
@@ -128,5 +138,23 @@ void waitLed(int loops){
     delay(250);
     setLedColor(strip.Color(0,0,0,0));
     delay(250);
+  }
+}
+
+
+void receiveEvent(int howMany) {
+  if (Wire.available()) {
+    playerTeamId = Wire.read();
+    setLedColor(strip.Color(255,0,255,0));
+    delay(50);
+    setLedColor(strip.Color(0,0,0,0));
+    delay(50);
+  }
+  if (Wire.available()) {
+    playerId = Wire.read();
+    setLedColor(strip.Color(255,0,255,0));
+    delay(50);
+    setLedColor(strip.Color(0,0,0,0));
+    delay(50);
   }
 }

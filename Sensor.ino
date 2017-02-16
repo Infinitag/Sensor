@@ -30,17 +30,20 @@ decode_results ir_results;
 IRrecv ir_recv(ir_receive_pin);
 
 void setup() {  
+  Serial.begin(57600);
+  
   // LEDs
   strip.begin();
   waitLed(8);
 
   //Wait For Master to Boot 
-  g_i2cAddress = queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
+  g_i2cAddress = 0x22; //queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
   Wire.begin(g_i2cAddress);
   Wire.onReceive(receiveEvent);
   
   // IR
   ir_recv.enableIRIn();
+  Serial.println("Los gehts");
 }
 
 void loop() {
@@ -143,6 +146,10 @@ void waitLed(int loops){
 
 
 void receiveEvent(int howMany) {
+  Serial.println("ReceiveEvent");
+  Serial.println(playerTeamId);
+  Serial.println(playerId);
+  Serial.println("=========");
   if (Wire.available()) {
     playerTeamId = Wire.read();
     setLedColor(strip.Color(255,0,255,0));
@@ -150,6 +157,7 @@ void receiveEvent(int howMany) {
     setLedColor(strip.Color(0,0,0,0));
     delay(50);
   }
+  Serial.println(playerTeamId);
   if (Wire.available()) {
     playerId = Wire.read();
     setLedColor(strip.Color(255,0,255,0));
@@ -157,4 +165,6 @@ void receiveEvent(int howMany) {
     setLedColor(strip.Color(0,0,0,0));
     delay(50);
   }
+  Serial.println(playerId);
+  Serial.println("=========");
 }

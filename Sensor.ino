@@ -29,6 +29,10 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(3, PIN, NEO_GRBW + NEO_KHZ800);
 decode_results ir_results;
 IRrecv ir_recv(ir_receive_pin);
 
+// Sensor Inits
+uint32_t sensorColors[] = {strip.Color(0,255,0,0), strip.Color(0,255,255,0), strip.Color(255,255,0,0), strip.Color(255,0,255,0),strip.Color(0,255,0,255), strip.Color(0,255,255,255), strip.Color(255,255,0,255), strip.Color(255,0,255,255)};
+uint32_t sensorColor = 0;
+
 void setup() {  
   Serial.begin(57600);
   
@@ -37,13 +41,17 @@ void setup() {
   waitLed(8);
 
   //Wait For Master to Boot 
-  g_i2cAddress = 0x22; //queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
+  //g_i2cAddress = 0x22; //queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
+  g_i2cAddress = queryI2CAddressFromMaster();
   Wire.begin(g_i2cAddress);
   Wire.onReceive(receiveEvent);
   
   // IR
   ir_recv.enableIRIn();
   Serial.println("Los gehts");
+
+  // Sensor
+  sensorColor = sensorColors[g_i2cAddress - 0x22];
 }
 
 void loop() {
@@ -67,7 +75,7 @@ void loop() {
     delay(200);
     ir_recv.enableIRIn();
   } else {
-    setLedColor(strip.Color(0,255,0,0));
+    setLedColor(sensorColor);
   }
   
   delay(10);

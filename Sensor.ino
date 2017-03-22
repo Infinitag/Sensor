@@ -200,12 +200,18 @@ void sendCmdPong() {
   sendCmd(data, 2);
 }
 
-void sendCmdIrShot(byte shot[]) {
+void sendCmdIrShot(unsigned long code) {
+  byte result[3] = {
+    B0,
+    B0,
+    B0
+  };
+  infinitagCore.ir_to_bytes(code, result);
   byte data[4] = {
     0x06,
-    1, // Hier 1. Byte vom Schuss
-    2, // Hier 2. Byte vom Schuss
-    3 // Hier 3. Byte vom Schuss
+    result[0],
+    result[1],
+    result[2]
   };
   sendCmd(data, 4);
 }

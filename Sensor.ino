@@ -176,3 +176,36 @@ void receiveEvent(int howMany) {
   Serial.println(playerId);
   Serial.println("=========");
 }
+
+
+void sendCmd(byte data[], unsigned int byteLength) {
+  // DHCP_MASTER_ADDRESS das richtige Ziel?
+  Wire.beginTransmission(DHCP_MASTER_ADDRESS);
+  Wire.write(data, byteLength);
+  Wire.endTransmission();
+}
+
+void sendCmdGetSensorID() {
+  byte data[1] = {
+    0x07
+  };
+  sendCmd(data, 1);
+}
+
+void sendCmdPong() {
+  byte data[2] = {
+    0x08,
+    g_i2cAddress
+  };
+  sendCmd(data, 2);
+}
+
+void sendCmdIrShot(byte shot[]) {
+  byte data[4] = {
+    0x06,
+    1, // Hier 1. Byte vom Schuss
+    2, // Hier 2. Byte vom Schuss
+    3 // Hier 3. Byte vom Schuss
+  };
+  sendCmd(data, 4);
+}

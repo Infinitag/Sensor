@@ -55,7 +55,7 @@ void setup() {
 }
 
 void loop() {
-  setLedColor(strip.Color(0,0,0,255));
+  setLedColor(sensorColor);
 
   if (ir_recv.decode(&ir_results)) {
     if (infinitagCore.ir_decode(ir_results.value)) {
@@ -67,15 +67,12 @@ void loop() {
         Wire.endTransmission();
         
         setLedColor(strip.Color(255,0,0,0));
+      delay(200);
       }
-    } else {
-      setLedColor(strip.Color(0,0,255,0));
     }
     
     delay(200);
     ir_recv.enableIRIn();
-  } else {
-    setLedColor(sensorColor);
   }
   
   delay(10);

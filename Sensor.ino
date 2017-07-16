@@ -38,7 +38,7 @@ void setup() {
   
   // LEDs
   strip.begin();
-  waitLed(8);
+  waitLed(15);
 
   //Wait For Master to Boot 
   //g_i2cAddress = 0x22; //queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
@@ -145,10 +145,23 @@ byte getI2CAddress(int addressOfAddress, bool keepAddress)
 
 void waitLed(int loops){
   for (int i = 0; i < (loops * 2); i++) {
-    setLedColor(strip.Color(0,0,0,255));
-    delay(250);
-    setLedColor(strip.Color(0,0,0,0));
-    delay(250);
+    strip.setPixelColor(0, strip.Color(0,0,0,255));
+    strip.setPixelColor(1, strip.Color(0,0,0,0));
+    strip.setPixelColor(2, strip.Color(0,0,0,0));
+    strip.show();
+    delay(166);
+  
+    strip.setPixelColor(0, strip.Color(0,0,0,0));
+    strip.setPixelColor(1, strip.Color(0,0,0,255));
+    strip.setPixelColor(2, strip.Color(0,0,0,0));
+    strip.show();
+    delay(167);
+  
+    strip.setPixelColor(0, strip.Color(0,0,0,0));
+    strip.setPixelColor(1, strip.Color(0,0,0,0));
+    strip.setPixelColor(2, strip.Color(0,0,0,255));
+    strip.show();
+    delay(167);
   }
 }
 

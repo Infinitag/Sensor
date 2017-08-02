@@ -61,13 +61,8 @@ void loop() {
     if (infinitagCore.ir_decode(ir_results.value)) {
       if(infinitagCore.ir_recv_team_id != playerTeamId)
       {
-        byte demoSignal = B00000001;
-        Wire.beginTransmission(DHCP_MASTER_ADDRESS);
-        Wire.write(demoSignal);
-        Wire.endTransmission();
-        
+        sendCmdIrShot(ir_results.value);
         setLedColor(strip.Color(255,0,0,0));
-      delay(200);
       }
     }
     
@@ -211,12 +206,10 @@ void sendCmdPong() {
 }
 
 void sendCmdIrShot(unsigned long code) {
-  byte result[3] = {
-    B0,
-    B0,
-    B0
-  };
-  infinitagCore.ir_to_bytes(code, result);
+  byte result[3];
+  
+  infinitagCore.ir_to_bytes(code, &result[0]);
+  
   byte data[4] = {
     0x06,
     result[0],

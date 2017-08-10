@@ -1,3 +1,11 @@
+/*
+  Sensor.ino - Sensor Library for the Infinitag System.
+  Created by Jani Taxidis & Tobias Stewen & Florian Kleene.
+  Info: www.infinitag.io
+
+  All files are published under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+  License: https://creativecommons.org/licenses/by-nc-sa/4.0/
+*/
 // Infinitag Libs
 #include <Infinitag_Core.h>
 
@@ -12,22 +20,15 @@
 #include <sensor_dhcp.h>
 
 // Settings
-#define PIN 3
-#define EEPROM_I2C_ADDRESS 0x00
-byte g_i2cAddress;
-int ir_receive_pin = 7;
-
-// Player
-byte playerTeamId = 1;
-byte playerId = 1;
+#include "Settings.h"
 
 // Infinitag Inits
 Infinitag_Core infinitagCore;
 
 // Vendor Inits
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(3, PIN, NEO_GRBW + NEO_KHZ800);
-decode_results ir_results;
-IRrecv ir_recv(ir_receive_pin);
+decode_results irResults;
+IRrecv irRecv(irReceivePin);
 
 // Sensor Inits
 uint32_t sensorColors[] = {strip.Color(0,255,0,0), strip.Color(0,255,255,0), strip.Color(255,255,0,0), strip.Color(255,0,255,0),strip.Color(0,255,0,255), strip.Color(0,255,255,255), strip.Color(255,255,0,255), strip.Color(255,0,255,255)};
@@ -41,33 +42,32 @@ void setup() {
   waitLed(15);
 
   //Wait For Master to Boot 
-  //g_i2cAddress = 0x22; //queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
-  g_i2cAddress = queryI2CAddressFromMaster();
-  Wire.begin(g_i2cAddress);
+  //gI2cAddress = 0x22; //queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
+  gI2cAddress = queryI2CAddressFromMaster();
+  Wire.begin(gI2cAddress);
   Wire.onReceive(receiveEvent);
   
   // IR
-  ir_recv.enableIRIn();
-  Serial.println("Los gehts");
+  irRecv.enableIRIn();
 
   // Sensor
-  sensorColor = sensorColors[g_i2cAddress - 0x22];
+  sensorColor = sensorColors[gI2cAddress - 0x22];
 }
 
 void loop() {
   setLedColor(sensorColor);
 
-  if (ir_recv.decode(&ir_results)) {
-    if (infinitagCore.ir_decode(ir_results.value)) {
-      if(infinitagCore.ir_recv_team_id != playerTeamId)
-      {
-        sendCmdIrShot(ir_results.value);
-        setLedColor(strip.Color(255,0,0,0));
-      }
+  if (irRecv.decode(&irResults)) {
+    infinitagCore.irDecode(irResults.value);
+    
+    if(infinitagCore.irRecvTeamId != playerTeamId)
+    {
+      sendCmdIrShot(irResults.value);
+      setLedColor(strip.Color(255,0,0,0));
     }
     
     delay(200);
-    ir_recv.enableIRIn();
+    irRecv.enableIRIn();
   }
   
   delay(10);
@@ -200,7 +200,7 @@ void sendCmdGetSensorID() {
 void sendCmdPong() {
   byte data[2] = {
     0x08,
-    g_i2cAddress
+    gI2cAddress
   };
   sendCmd(data, 2);
 }
@@ -208,7 +208,7 @@ void sendCmdPong() {
 void sendCmdIrShot(unsigned long code) {
   byte result[3];
   
-  infinitagCore.ir_to_bytes(code, &result[0]);
+  infinitagCore.irToBytes(code, &result[0]);
   
   byte data[4] = {
     0x06,

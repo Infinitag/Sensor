@@ -31,7 +31,7 @@ decode_results irResults;
 IRrecv irRecv(irReceivePin);
 
 // Sensor Inits
-uint32_t sensorColors[] = {strip.Color(0,255,0,0), strip.Color(0,255,255,0), strip.Color(255,255,0,0), strip.Color(255,0,255,0),strip.Color(0,255,0,255), strip.Color(0,255,255,255), strip.Color(255,255,0,255), strip.Color(255,0,255,255)};
+uint32_t sensorColors[] = {strip.Color(0,255,0,0), strip.Color(0,0,255,0), strip.Color(0,255,255,0), strip.Color(255,255,0,0), strip.Color(255,0,255,0),strip.Color(0,255,0,255), strip.Color(0,255,255,255), strip.Color(255,255,0,255), strip.Color(255,0,255,255)};
 uint32_t sensorColor = 0;
 
 void setup() {  
@@ -51,7 +51,7 @@ void setup() {
   irRecv.enableIRIn();
 
   // Sensor
-  sensorColor = sensorColors[gI2cAddress - 0x22];
+  allocateSensorColor();
 }
 
 void loop() {
@@ -81,8 +81,7 @@ void setLedColor(uint32_t c) {
 }
 
 
-byte queryI2CAddressFromMaster()
-{
+byte queryI2CAddressFromMaster() {
   byte i2cAddress = DHCP_DEFAULT_SLAVE_ADDRESS;
   Wire.begin(DHCP_DEFAULT_SLAVE_ADDRESS);
 
@@ -102,6 +101,10 @@ byte queryI2CAddressFromMaster()
     Wire.read();  
   }
   return i2cAddress;
+}
+
+void allocateSensorColor() {
+  sensorColor = sensorColors[playerTeamId - 1];
 }
 
 /**
@@ -157,29 +160,51 @@ void waitLed(int loops){
   }
 }
 
-
 void receiveEvent(int howMany) {
-  Serial.println("ReceiveEvent");
-  Serial.println(playerTeamId);
-  Serial.println(playerId);
-  Serial.println("=========");
-  if (Wire.available()) {
-    playerTeamId = Wire.read();
-    setLedColor(strip.Color(255,0,255,0));
-    delay(50);
-    setLedColor(strip.Color(0,0,0,0));
-    delay(50);
+  Serial.println("receiveEvent");
+  int byteCounter = 0;
+  byte data[9] = {
+    B0,
+    B0,
+    B0,
+    B0,
+    B0,
+    B0,
+    B0,
+    B0,
+    B0,
+  };
+  
+  while (Wire.available()) {
+    data[byteCounter] = Wire.read();
+    Serial.println(data[byteCounter]);
+    byteCounter++;
   }
-  Serial.println(playerTeamId);
-  if (Wire.available()) {
-    playerId = Wire.read();
-    setLedColor(strip.Color(255,0,255,0));
-    delay(50);
-    setLedColor(strip.Color(0,0,0,0));
-    delay(50);
+
+  switch (data[0]) {
+    // Set TeamId
+    case 0x02:
+      if (byteCounter == 2) {
+        playerTeamId = data[1];
+        setLedColor(strip.Color(255,0,255,0));
+        delay(50);
+        setLedColor(strip.Color(0,0,0,0));
+        delay(50);
+        allocateSensorColor();
+      }
+      break;
+      
+    // Set PlayerId
+    case 0x03:
+      if (byteCounter == 2) {
+        playerId = data[1];
+        setLedColor(strip.Color(255,0,255,0));
+        delay(50);
+        setLedColor(strip.Color(0,0,0,0));
+        delay(50);
+      }
+      break;
   }
-  Serial.println(playerId);
-  Serial.println("=========");
 }
 
 

@@ -30,7 +30,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(3, PIN, NEO_GRBW + NEO_KHZ800);
 decode_results irResults;
 IRrecv irRecv(irReceivePin);
 
-// Sensor Inits
+// Color
 uint32_t sensorColors[] = {strip.Color(0,255,0,0), strip.Color(0,0,255,0), strip.Color(0,255,255,0), strip.Color(255,255,0,0), strip.Color(255,0,255,0),strip.Color(0,255,0,255), strip.Color(0,255,255,255), strip.Color(255,255,0,255), strip.Color(255,0,255,255)};
 uint32_t sensorColor = 0;
 
@@ -52,18 +52,23 @@ void setup() {
 
   // Sensor
   allocateSensorColor();
+  setLedColor(sensorColor);
 }
 
 void loop() {
-  setLedColor(sensorColor);
-
+  if (playerAlive) {
+    allocateSensorColor();
+    setLedColor(sensorColor);
+  } else {
+    setLedColor(strip.Color(0,0,0,1));
+  }
+  
   if (irRecv.decode(&irResults)) {
     infinitagCore.irDecode(irResults.value);
     
     if(infinitagCore.irRecvTeamId != playerTeamId)
     {
       sendCmdIrShot(irResults.value);
-      setLedColor(strip.Color(255,0,0,0));
     }
     
     delay(200);
@@ -88,7 +93,7 @@ byte queryI2CAddressFromMaster() {
   while(Wire.requestFrom(DHCP_MASTER_ADDRESS, 1) != 1)
   {
     //don't block i2c bus
-    setLedColor(strip.Color(255,0,0,0));
+    setLedColor(strip.Color(100,0,0,0));
     delay(250);
     setLedColor(strip.Color(0,0,0,0));
     delay(250);
@@ -186,11 +191,8 @@ void receiveEvent(int howMany) {
     case 0x02:
       if (byteCounter == 2) {
         playerTeamId = data[1];
-        setLedColor(strip.Color(255,0,255,0));
-        delay(50);
-        setLedColor(strip.Color(0,0,0,0));
-        delay(50);
         allocateSensorColor();
+        setLedColor(sensorColor);
       }
       break;
       
@@ -198,10 +200,13 @@ void receiveEvent(int howMany) {
     case 0x03:
       if (byteCounter == 2) {
         playerId = data[1];
-        setLedColor(strip.Color(255,0,255,0));
-        delay(50);
-        setLedColor(strip.Color(0,0,0,0));
-        delay(50);
+      }
+      break;
+      
+    // Set Alive
+    case 0x07:
+      if (byteCounter == 2) {
+        setAlive((data[1] == 0x01));
       }
       break;
   }
@@ -243,3 +248,8 @@ void sendCmdIrShot(unsigned long code) {
   };
   sendCmd(data, 4);
 }
+
+void setAlive(bool alive) {
+  playerAlive = alive;
+}
+

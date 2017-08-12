@@ -14,3 +14,4 @@ int irReceivePin = 7;
 // Player
 byte playerTeamId = 1;
 byte playerId = 1;
+bool playerAlive = true;

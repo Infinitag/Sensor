@@ -17,7 +17,7 @@
   #include <avr/power.h>
 #endif
 #include <IRremote.h>
-#include <sensor_dhcp.h>
+//#include <sensor_dhcp.h>
 
 // Settings
 #include "Settings.h"
@@ -39,13 +39,14 @@ void setup() {
   
   // LEDs
   strip.begin();
-  waitLed(15);
+  waitLed(2);
 
   //Wait For Master to Boot 
-  //gI2cAddress = 0x22; //queryI2CAddressFromMaster();//(EEPROM_I2C_ADDRESS, false);
-  gI2cAddress = queryI2CAddressFromMaster();
+  gI2cAddress = 0x22;
+  //gI2cAddress = queryI2CAddressFromMaster();
   Wire.begin(gI2cAddress);
   Wire.onReceive(receiveEvent);
+  Wire.onRequest(requestEvent);
   
   // IR
   irRecv.enableIRIn();
@@ -68,10 +69,8 @@ void loop() {
     
     if(infinitagCore.irRecvTeamId != playerTeamId)
     {
-      sendCmdIrShot(irResults.value);
+      setValidIrShot(irResults.value);
     }
-    
-    delay(200);
     irRecv.enableIRIn();
   }
   
@@ -85,62 +84,8 @@ void setLedColor(uint32_t c) {
   strip.show();
 }
 
-
-byte queryI2CAddressFromMaster() {
-  byte i2cAddress = DHCP_DEFAULT_SLAVE_ADDRESS;
-  Wire.begin(DHCP_DEFAULT_SLAVE_ADDRESS);
-
-  while(Wire.requestFrom(DHCP_MASTER_ADDRESS, 1) != 1)
-  {
-    //don't block i2c bus
-    setLedColor(strip.Color(100,0,0,0));
-    delay(250);
-    setLedColor(strip.Color(0,0,0,0));
-    delay(250);
-  }
-  i2cAddress = Wire.read();
-
-  setLedColor(strip.Color(0,0,0,255));
-  while(Wire.available())
-  {
-    Wire.read();  
-  }
-  return i2cAddress;
-}
-
 void allocateSensorColor() {
   sensorColor = sensorColors[playerTeamId - 1];
-}
-
-/**
- * Before calling this function the master should be given some appropriate 
- * amount of time to start the i2c interface
- */
-byte getI2CAddress(int addressOfAddress, bool keepAddress)
-{
-  byte i2cAddress = EEPROM.read(addressOfAddress);
-  if(i2cAddress == 255) //override EEPROM default value
-  {
-    i2cAddress = DHCP_DEFAULT_SLAVE_ADDRESS;
-  }
-  if(keepAddress)
-  {
-    if(i2cAddress == DHCP_DEFAULT_SLAVE_ADDRESS)
-    {
-      i2cAddress = queryI2CAddressFromMaster();
-      EEPROM.write(addressOfAddress, i2cAddress);
-    }  
-    else
-    {
-      return i2cAddress;  
-    }
-  }
-  else
-  {    
-    i2cAddress = queryI2CAddressFromMaster();
-  }
-  
-  return i2cAddress;
 }
 
 void waitLed(int loops){
@@ -166,7 +111,6 @@ void waitLed(int loops){
 }
 
 void receiveEvent(int howMany) {
-  Serial.println("receiveEvent");
   int byteCounter = 0;
   byte data[9] = {
     B0,
@@ -182,7 +126,6 @@ void receiveEvent(int howMany) {
   
   while (Wire.available()) {
     data[byteCounter] = Wire.read();
-    Serial.println(data[byteCounter]);
     byteCounter++;
   }
 
@@ -212,41 +155,23 @@ void receiveEvent(int howMany) {
   }
 }
 
-
-void sendCmd(byte data[], unsigned int byteLength) {
-  // DHCP_MASTER_ADDRESS das richtige Ziel?
-  Wire.beginTransmission(DHCP_MASTER_ADDRESS);
-  Wire.write(data, byteLength);
-  Wire.endTransmission();
+void requestEvent() {
+  Wire.write(lastShot, 4);
+  lastShot[0] = 0;
+  lastShot[1] = 0;
+  lastShot[2] = 0;
+  lastShot[3] = 0;
 }
 
-void sendCmdGetSensorID() {
-  byte data[1] = {
-    0x07
-  };
-  sendCmd(data, 1);
-}
-
-void sendCmdPong() {
-  byte data[2] = {
-    0x08,
-    gI2cAddress
-  };
-  sendCmd(data, 2);
-}
-
-void sendCmdIrShot(unsigned long code) {
+void setValidIrShot(unsigned long code) {
   byte result[3];
   
   infinitagCore.irToBytes(code, &result[0]);
-  
-  byte data[4] = {
-    0x06,
-    result[0],
-    result[1],
-    result[2]
-  };
-  sendCmd(data, 4);
+
+  lastShot[0] = 0x06;
+  lastShot[1] = result[0];
+  lastShot[2] = result[1];
+  lastShot[3] = result[2];
 }
 
 void setAlive(bool alive) {

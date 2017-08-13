@@ -15,3 +15,5 @@ int irReceivePin = 7;
 byte playerTeamId = 1;
 byte playerId = 1;
 bool playerAlive = true;
+
+byte lastShot[4] = {0, 0, 0, 0};

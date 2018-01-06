@@ -26,7 +26,7 @@
 Infinitag_Core infinitagCore;
 
 // Vendor Inits
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(3, PIN, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(ledAmount, ledPin, NEO_GRBW + NEO_KHZ800);
 decode_results irResults;
 IRrecv irRecv(irReceivePin);
 
@@ -36,19 +36,22 @@ byte animatePattern[7][20][4] = {
     {0, 0, 0, 0},
   },
   {
-    {100, 100, 100, 0},
+    {100, 100, 100, 100},
   },
   {
-    {5, 5, 5, 0},
+    {5, 5, 5, 5},
   },
   {
-    {100, 0, 10, 0},
-    {10, 100, 0, 0},
-    {0, 10, 100, 0}
+    {100, 0, 1, 15},
+    {15, 100, 0, 1},
+    {1, 15, 100, 0},
+    {0, 1, 15, 100}
   },
   {
     {100, 0, 0, 0},
     {0, 100, 0, 0},
+    {0, 0, 100, 0},
+    {0, 0, 0, 100},
     {0, 0, 100, 0},
     {0, 100, 0, 0}
   },
@@ -58,36 +61,36 @@ byte animatePattern[7][20][4] = {
     {100, 100, 0, 0},
     {0, 0, 0, 0},
     {0, 0, 0, 0},
-    {0, 0, 100, 0},
+    {0, 0, 100, 100},
     {0, 0, 0, 0},
-    {0, 0, 100, 0},
+    {0, 0, 100, 100},
     {0, 0, 0, 0},
     {0, 0, 0, 0}
   },
   {
-    {100, 100, 100, 0},
-    {90, 90, 90, 0},
-    {80, 80, 80, 0},
-    {70, 70, 70, 0},
-    {60, 60, 60, 0},
-    {50, 50, 50, 0},
-    {40, 40, 40, 0},
-    {30, 30, 30, 0},
-    {20, 20, 20, 0},
-    {10, 10, 10, 0},
-    {1, 1, 1, 0},
-    {10, 10, 10, 0},
-    {20, 20, 20, 0},
-    {30, 30, 30, 0},
-    {40, 40, 40, 0},
-    {50, 50, 50, 0},
-    {60, 60, 60, 0},
-    {70, 70, 70, 0},
-    {80, 80, 80, 0},
-    {90, 90, 90, 0}
+    {100, 100, 100, 100},
+    {90, 90, 90, 90},
+    {80, 80, 80, 80},
+    {70, 70, 70, 70},
+    {60, 60, 60, 60},
+    {50, 50, 50, 50},
+    {40, 40, 40, 40},
+    {30, 30, 30, 30},
+    {20, 20, 20, 20},
+    {10, 10, 10, 10},
+    {1, 1, 1, 1},
+    {10, 10, 10, 10},
+    {20, 20, 20, 20},
+    {30, 30, 30, 30},
+    {40, 40, 40, 40},
+    {50, 50, 50, 50},
+    {60, 60, 60, 60},
+    {70, 70, 70, 70},
+    {80, 80, 80, 80},
+    {90, 90, 90, 90}
   }
 };
-byte animateSteps[7] = {1, 1, 1, 3, 4, 10, 20};
+byte animateSteps[7] = {1, 1, 1, 4, 6, 10, 20};
 byte animateCurrentStep = 0;
 unsigned long animateNextStep = 0;
 byte animateCurrentAnimation = 0;
@@ -137,18 +140,28 @@ void waitLed(int loops){
     strip.setPixelColor(0, strip.Color(0,0,0,255));
     strip.setPixelColor(1, strip.Color(0,0,0,0));
     strip.setPixelColor(2, strip.Color(0,0,0,0));
+    strip.setPixelColor(3, strip.Color(0,0,0,0));
     strip.show();
     delay(166);
   
     strip.setPixelColor(0, strip.Color(0,0,0,0));
     strip.setPixelColor(1, strip.Color(0,0,0,255));
     strip.setPixelColor(2, strip.Color(0,0,0,0));
+    strip.setPixelColor(3, strip.Color(0,0,0,0));
     strip.show();
     delay(167);
   
     strip.setPixelColor(0, strip.Color(0,0,0,0));
     strip.setPixelColor(1, strip.Color(0,0,0,0));
     strip.setPixelColor(2, strip.Color(0,0,0,255));
+    strip.setPixelColor(3, strip.Color(0,0,0,0));
+    strip.show();
+    delay(167);
+  
+    strip.setPixelColor(0, strip.Color(0,0,0,0));
+    strip.setPixelColor(1, strip.Color(0,0,0,0));
+    strip.setPixelColor(2, strip.Color(0,0,0,0));
+    strip.setPixelColor(3, strip.Color(0,0,0,255));
     strip.show();
     delay(167);
   }
@@ -237,28 +250,15 @@ void setAlive(bool alive) {
 void animation() {
   if (animateCurrentAnimation > 0) {
     if (animateNextStep <= millis()) {
-      byte ledOneBrightness = animatePattern[animateCurrentAnimation][animateCurrentStep][0];
-      byte ledTwoBrightness = animatePattern[animateCurrentAnimation][animateCurrentStep][1];
-      byte ledThreeBrightness = animatePattern[animateCurrentAnimation][animateCurrentStep][2];
-  
-      uint8_t ledOneRed = ledOneBrightness * animateColor[0] / 100;
-      uint8_t ledOneGreen = ledOneBrightness * animateColor[1] / 100;
-      uint8_t ledOneBlue = ledOneBrightness * animateColor[2] / 100;
-      uint8_t ledOneWhite = ledOneBrightness * animateColor[3] / 100;
-      
-      uint8_t ledTwoRed = ledTwoBrightness * animateColor[0] / 100;
-      uint8_t ledTwoGreen = ledTwoBrightness * animateColor[1] / 100;
-      uint8_t ledTwoBlue = ledTwoBrightness * animateColor[2] / 100;
-      uint8_t ledTwoWhite = ledTwoBrightness * animateColor[3] / 100;
-      
-      uint8_t ledThreeRed = ledThreeBrightness * animateColor[0] / 100;
-      uint8_t ledThreeGreen = ledThreeBrightness * animateColor[1] / 100;
-      uint8_t ledThreeBlue = ledThreeBrightness * animateColor[2] / 100;
-      uint8_t ledThreeWhite = ledThreeBrightness * animateColor[3] / 100;
-      
-      strip.setPixelColor(0, strip.Color(ledOneRed,ledOneGreen,ledOneBlue,ledOneWhite));
-      strip.setPixelColor(1, strip.Color(ledTwoRed,ledTwoGreen,ledTwoBlue,ledTwoWhite));
-      strip.setPixelColor(2, strip.Color(ledThreeRed,ledThreeGreen,ledThreeBlue,ledThreeWhite));
+      for (int i = 0; i < ledAmount; i++) {
+        byte ledBrightness = animatePattern[animateCurrentAnimation][animateCurrentStep][i];
+        strip.setPixelColor(i, strip.Color(
+            ledBrightness * animateColor[0] / 100,
+            ledBrightness * animateColor[1] / 100,
+            ledBrightness * animateColor[2] / 100,
+            ledBrightness * animateColor[3] / 100
+        ));
+      }
       strip.show();
   
       animateNextStep = millis() + animateTime;
@@ -268,9 +268,9 @@ void animation() {
       }
     }
   } else {
-    strip.setPixelColor(0, strip.Color(0,0,0,0));
-    strip.setPixelColor(1, strip.Color(0,0,0,0));
-    strip.setPixelColor(2, strip.Color(0,0,0,0));
+    for (int i = 0; i < ledAmount; i++) {
+      strip.setPixelColor(i, strip.Color(0,0,0,0));
+    }
     strip.show();
   }
 }

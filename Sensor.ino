@@ -30,74 +30,6 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(ledAmount, ledPin, NEO_GRBW + NEO_KH
 decode_results irResults;
 IRrecv irRecv(irReceivePin);
 
-// Animations
-byte animatePattern[7][20][4] = {
-  {
-    {0, 0, 0, 0},
-  },
-  {
-    {100, 100, 100, 100},
-  },
-  {
-    {5, 5, 5, 5},
-  },
-  {
-    {100, 0, 1, 15},
-    {15, 100, 0, 1},
-    {1, 15, 100, 0},
-    {0, 1, 15, 100}
-  },
-  {
-    {100, 0, 0, 0},
-    {0, 100, 0, 0},
-    {0, 0, 100, 0},
-    {0, 0, 0, 100},
-    {0, 0, 100, 0},
-    {0, 100, 0, 0}
-  },
-  {
-    {100, 100, 0, 0},
-    {0, 0, 0, 0},
-    {100, 100, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 100, 100},
-    {0, 0, 0, 0},
-    {0, 0, 100, 100},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0}
-  },
-  {
-    {100, 100, 100, 100},
-    {90, 90, 90, 90},
-    {80, 80, 80, 80},
-    {70, 70, 70, 70},
-    {60, 60, 60, 60},
-    {50, 50, 50, 50},
-    {40, 40, 40, 40},
-    {30, 30, 30, 30},
-    {20, 20, 20, 20},
-    {10, 10, 10, 10},
-    {1, 1, 1, 1},
-    {10, 10, 10, 10},
-    {20, 20, 20, 20},
-    {30, 30, 30, 30},
-    {40, 40, 40, 40},
-    {50, 50, 50, 50},
-    {60, 60, 60, 60},
-    {70, 70, 70, 70},
-    {80, 80, 80, 80},
-    {90, 90, 90, 90}
-  }
-};
-byte animateSteps[7] = {1, 1, 1, 4, 6, 10, 20};
-byte animateCurrentStep = 0;
-unsigned long animateNextStep = 0;
-byte animateCurrentAnimation = 0;
-unsigned int animateTime = 100;
-uint8_t animateColor[4] = {0, 0 , 0, 0};
-
-
 void setup() {  
   Serial.begin(57600);
   
@@ -137,33 +69,13 @@ void loop() {
 
 void waitLed(int loops){
   for (int i = 0; i < (loops * 2); i++) {
-    strip.setPixelColor(0, strip.Color(0,0,0,255));
-    strip.setPixelColor(1, strip.Color(0,0,0,0));
-    strip.setPixelColor(2, strip.Color(0,0,0,0));
-    strip.setPixelColor(3, strip.Color(0,0,0,0));
-    strip.show();
-    delay(166);
-  
-    strip.setPixelColor(0, strip.Color(0,0,0,0));
-    strip.setPixelColor(1, strip.Color(0,0,0,255));
-    strip.setPixelColor(2, strip.Color(0,0,0,0));
-    strip.setPixelColor(3, strip.Color(0,0,0,0));
-    strip.show();
-    delay(167);
-  
-    strip.setPixelColor(0, strip.Color(0,0,0,0));
-    strip.setPixelColor(1, strip.Color(0,0,0,0));
-    strip.setPixelColor(2, strip.Color(0,0,0,255));
-    strip.setPixelColor(3, strip.Color(0,0,0,0));
-    strip.show();
-    delay(167);
-  
-    strip.setPixelColor(0, strip.Color(0,0,0,0));
-    strip.setPixelColor(1, strip.Color(0,0,0,0));
-    strip.setPixelColor(2, strip.Color(0,0,0,0));
-    strip.setPixelColor(3, strip.Color(0,0,0,255));
-    strip.show();
-    delay(167);
+    for (int cStep = 0; cStep < ledAmount; cStep++) {
+      for (int cLed = 0; cLed < ledAmount; cLed++) {
+        strip.setPixelColor(cLed, strip.Color(0, 0, 0, (cStep == cLed) ? 255 : 0));
+      }
+      strip.show();
+      delay(166);
+    }
   }
 }
 

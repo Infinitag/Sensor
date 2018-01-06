@@ -71,12 +71,50 @@ void waitLed(int loops){
   for (int i = 0; i < (loops * 2); i++) {
     for (int cStep = 0; cStep < ledAmount; cStep++) {
       for (int cLed = 0; cLed < ledAmount; cLed++) {
-        strip.setPixelColor(cLed, strip.Color(0, 0, 0, (cStep == cLed) ? 255 : 0));
+        strip.setPixelColor(cLed, strip.Color(0, 0, 0, (cStep == cLed) ? (int)(255 * brightnessSensorFaktor) : 0));
       }
       strip.show();
       delay(166);
     }
   }
+}
+
+void checkAndSetBrightness() {
+  brightnessSensorValue = analogRead(brightnessSensorPin);
+  if (brightnessSensorValue <= 100) {
+    brightnessSensorFaktor = 0.1;
+  } else if (brightnessSensorValue <= 200) {
+    brightnessSensorFaktor = 0.3;
+  } else if (brightnessSensorValue <= 300) {
+    brightnessSensorFaktor = 0.6;
+  } else {
+    brightnessSensorFaktor = 1;
+  }
+}
+
+void brightnessTest() {
+  for (int cLed = 0; cLed < ledAmount; cLed++) {
+    strip.setPixelColor(cLed, strip.Color(0, 0, 0, 0));
+  }
+  strip.show();
+  delay(200);
+
+  brightnessSensorValue = analogRead(0);
+  delay(100);
+  
+  for (int cLed = 0; cLed < ledAmount; cLed++) {
+    if (brightnessSensorValue <= 100) {
+      strip.setPixelColor(cLed, strip.Color(255, 0, 0, 0));
+    } else if (brightnessSensorValue <= 200) {
+      strip.setPixelColor(cLed, strip.Color(0, 255, 0, 0));
+    } else if (brightnessSensorValue <= 300) {
+      strip.setPixelColor(cLed, strip.Color(0, 0, 255, 0));
+    } else {
+      strip.setPixelColor(cLed, strip.Color(0, 0, 0, 255));
+    }
+  }
+  strip.show();
+  delay(500);
 }
 
 void receiveEvent(int howMany) {
@@ -163,7 +201,7 @@ void animation() {
   if (animateCurrentAnimation > 0) {
     if (animateNextStep <= millis()) {
       for (int i = 0; i < ledAmount; i++) {
-        byte ledBrightness = animatePattern[animateCurrentAnimation][animateCurrentStep][i];
+        byte ledBrightness = animatePattern[animateCurrentAnimation][animateCurrentStep][i] * brightnessSensorFaktor;
         strip.setPixelColor(i, strip.Color(
             ledBrightness * animateColor[0] / 100,
             ledBrightness * animateColor[1] / 100,

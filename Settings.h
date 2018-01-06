@@ -8,6 +8,9 @@
 */
 #define ledPin 4
 #define ledAmount 4
+#define brightnessSensorPin 0
+int brightnessSensorValue = 0;
+float brightnessSensorFaktor = 1;
 #define EEPROM_I2C_ADDRESS 0x00
 byte gI2cAddress;
 int irReceivePin = 7;

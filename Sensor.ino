@@ -32,6 +32,8 @@ IRrecv irRecv(irReceivePin);
 
 void setup() {  
   Serial.begin(57600);
+
+  checkAndSetBrightness();
   
   // LEDs
   strip.begin();
@@ -220,6 +222,7 @@ void animation() {
       strip.setPixelColor(i, strip.Color(0,0,0,0));
     }
     strip.show();
+    checkAndSetBrightness();
   }
 }
 

@@ -71,7 +71,7 @@ void waitLed(int loops){
   for (int i = 0; i < (loops * 2); i++) {
     for (int cStep = 0; cStep < ledAmount; cStep++) {
       for (int cLed = 0; cLed < ledAmount; cLed++) {
-        strip.setPixelColor(cLed, strip.Color(0, 0, 0, (cStep == cLed) ? (int)(255 * brightnessSensorFaktor) : 0));
+        strip.setPixelColor(cLed, strip.Color(0, 0, 0, (cStep == cLed) ? c(255) : 0));
       }
       strip.show();
       delay(166);
@@ -97,10 +97,9 @@ void brightnessTest() {
     strip.setPixelColor(cLed, strip.Color(0, 0, 0, 0));
   }
   strip.show();
-  delay(200);
+  delay(30);
 
   brightnessSensorValue = analogRead(0);
-  delay(100);
   
   for (int cLed = 0; cLed < ledAmount; cLed++) {
     if (brightnessSensorValue <= 100) {
@@ -114,7 +113,7 @@ void brightnessTest() {
     }
   }
   strip.show();
-  delay(500);
+  delay(100);
 }
 
 void receiveEvent(int howMany) {
@@ -201,12 +200,11 @@ void animation() {
   if (animateCurrentAnimation > 0) {
     if (animateNextStep <= millis()) {
       for (int i = 0; i < ledAmount; i++) {
-        byte ledBrightness = animatePattern[animateCurrentAnimation][animateCurrentStep][i] * brightnessSensorFaktor;
         strip.setPixelColor(i, strip.Color(
-            ledBrightness * animateColor[0] / 100,
-            ledBrightness * animateColor[1] / 100,
-            ledBrightness * animateColor[2] / 100,
-            ledBrightness * animateColor[3] / 100
+            c(animatePattern[animateCurrentAnimation][animateCurrentStep][i] * animateColor[0] / 100),
+            c(animatePattern[animateCurrentAnimation][animateCurrentStep][i] * animateColor[1] / 100),
+            c(animatePattern[animateCurrentAnimation][animateCurrentStep][i] * animateColor[2] / 100),
+            c(animatePattern[animateCurrentAnimation][animateCurrentStep][i] * animateColor[3] / 100)
         ));
       }
       strip.show();
@@ -223,5 +221,9 @@ void animation() {
     }
     strip.show();
   }
+}
+
+uint16_t c(uint16_t inputColor) {
+  return gammaCorrection[((uint16_t)(brightnessSensorFaktor * (float)inputColor))];
 }
 
